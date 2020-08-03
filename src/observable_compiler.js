@@ -414,7 +414,7 @@ ${ESMVariables(moduleObject, importMap) || ""}
 const defaultResolver = async (path) => {
   const source = extractPath(path);
   console.log("trying to resolve", path);
-  return import(`https://api.observablehq.com/${source}.js?v=3`).then(
+  return fetch(`https://api.observablehq.com/${source}.js?v=3`).then(
     (m) => m.default
   );
 };
