@@ -1,4 +1,4 @@
-import { parseCell, parseModule, walk } from "@observablehq/parser";
+import { parseCell, walk } from "@observablehq/parser";
 import { simple } from "acorn-walk";
 
 const extractPath = (path) => {
@@ -19,8 +19,9 @@ const extractPath = (path) => {
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 const GeneratorFunction = Object.getPrototypeOf(function* () {}).constructor;
-const AsyncGeneratorFunction = Object.getPrototypeOf(async function* () {})
-  .constructor;
+const AsyncGeneratorFunction = Object.getPrototypeOf(
+  async function* () {}
+).constructor;
 
 const setupRegularCell = (cell) => {
   let name = null;
@@ -84,9 +85,8 @@ const setupRegularCell = (cell) => {
 };
 
 const createRegularCellDefintion = (cell) => {
-  const { cellName, references, bodyText, cellReferences } = setupRegularCell(
-    cell
-  );
+  const { cellName, references, bodyText, cellReferences } =
+    setupRegularCell(cell);
 
   let code;
   if (cell.body.type !== "BlockStatement") {
@@ -100,6 +100,7 @@ const createRegularCellDefintion = (cell) => {
     f = new AsyncGeneratorFunction(...references, code);
   else if (cell.async) f = new AsyncFunction(...references, code);
   else if (cell.generator) f = new GeneratorFunction(...references, code);
+  // eslint-disable-next-line no-new-func
   else f = new Function(...references, code);
   return {
     cellName,
@@ -172,12 +173,8 @@ const createCellDefinition = (
   define = true
 ) => {
   if (cell.body.type === "ImportDeclaration") {
-    const {
-      specifiers,
-      hasInjections,
-      injections,
-      importString,
-    } = setupImportCell(cell);
+    const { specifiers, hasInjections, injections, importString } =
+      setupImportCell(cell);
     // this will display extra names for viewof / mutable imports (for now?)
     main.variable(observer()).define(
       null,
@@ -198,11 +195,8 @@ ${importString}
       for (const { name, alias } of specifiers) main.import(name, alias, other);
     }
   } else {
-    const {
-      cellName,
-      cellFunction,
-      cellReferences,
-    } = createRegularCellDefintion(cell);
+    const { cellName, cellFunction, cellReferences } =
+      createRegularCellDefintion(cell);
     if (cell.id && cell.id.type === "ViewExpression") {
       const reference = `viewof ${cellName}`;
       if (define) {
@@ -325,21 +319,16 @@ const ESMVariables = (moduleObject, importMap) => {
       let src = "";
 
       if (cell.body.type === "ImportDeclaration") {
-        const {
-          specifiers,
-          hasInjections,
-          injections,
-          importString,
-        } = setupImportCell(cell);
+        const { specifiers, hasInjections, injections, importString } =
+          setupImportCell(cell);
         // this will display extra names for viewof / mutable imports (for now?)
-        src +=
-          `  main.variable(observer()).define(
+        src += `  main.variable(observer()).define(
     null,
     ["md"],
     md => md\`~~~javascript
 ${importString}
 ~~~\`
-  );` + "\n";
+  );\n`;
         // name imported notebook define functions
         const childName = `child${++childJ}`;
         src += `  const ${childName} = runtime.module(${
@@ -354,12 +343,8 @@ ${specifiers
   )
   .join("\n")}`;
       } else {
-        const {
-          cellName,
-          references,
-          bodyText,
-          cellReferences,
-        } = setupRegularCell(cell);
+        const { cellName, references, bodyText, cellReferences } =
+          setupRegularCell(cell);
 
         const cellNameString = cellName ? `"${cellName}"` : "";
         const referenceString = references.join(",");
@@ -452,7 +437,7 @@ export class Compiler {
   }
 
   async module(text) {
-    const m1 = parseModule(text);
+    const m1 = parseCell(text);
     return await createModuleDefintion(
       m1,
       this.resolve,
@@ -473,7 +458,7 @@ export class Compiler {
   }
 
   moduleToESModule(text) {
-    const m1 = parseModule(text);
+    const m1 = parseCell(text);
     return createESModule(m1, this.resolvePath, this.resolveFileAttachments);
   }
   notebookToESModule(obj) {

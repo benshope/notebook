@@ -1,6 +1,6 @@
 import React from "react";
 import { Runtime, Inspector } from "@observablehq/runtime";
-import { parseCell } from "@observablehq/parser";
+// import { parseCell } from "@observablehq/parser";
 
 import { Compiler } from "./observable_compiler";
 
@@ -9,14 +9,14 @@ const compile = new Compiler();
 // import styled from 'styled-components';
 
 function App() {
-  const runtime = new Runtime();
+  const runtimeRef = React.useRef(new Runtime());
   const observableRef = React.useRef();
 
   const [notebook, setNotebook] = React.useState([
     'd3 = require("d3-array")',
     "html`I am a text node.`",
     'DOM.text("I am a text node.")',
-    // eslint-ignore-next-line
+    // eslint-disable-next-line no-template-curly-in-string
     'html`This is escaped: ${DOM.text("<i>Hello!</i>")}`',
     "html`<input type=range min=0 max=10 step=1>`",
   ]);
@@ -33,7 +33,10 @@ function App() {
       compile
         .notebook({ nodes: notebook.map((cell) => ({ value: cell })) })
         .then((define) => {
-          runtime.module(define, Inspector.into(observableRef.current));
+          runtimeRef.current.module(
+            define,
+            Inspector.into(observableRef.current)
+          );
         });
     }
   }, [observableRef, notebook]);
